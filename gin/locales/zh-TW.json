@@ -1,0 +1,29 @@
+{
+  "success": "成功.",
+  "failed": "失敗.",
+
+  "failed_marshal": "Failed to marshal data.",
+  "failed_unmarshal": "Failed to unmarshal data.",
+
+  "failed_db_query": "Failed on get query data.",
+  "failed_db_insert": "Failed to insert data.",
+  "failed_db_update": "Failed to update data.",
+  "failed_db_transaction": "Failed to begin transaction.",
+  "failed_db_commit": "Failed to commit transaction.",
+
+  "failed_redis_set": "Failed to set redis data [{{.redis_key}}][{{.redis_data}}].",
+  "failed_redis_get": "Failed to get redis data [{{.redis_key}}].",
+  "failed_redis_remove": "Failed to remove redis data [{{.redis_key}}].",
+
+  "invalid_input_request": "Invalid input request.",
+  "required": "This field [{{.field}}] is required.",
+  "eqfield": "This field [{{.field}}] not equals to [{{.param}}].",
+  "empty_string": "This field [{{.field}}] is empty.",
+  "min": "[{{.field}}] minimum length is [{{.param}}].",
+  "max": "[{{.field}}] maximum length is [{{.param}}].",
+
+  "invalid_login": "Invalid username or password.",
+  "failed_hash_password": "Failed to hash password.",
+  "failed_generate_token": "Failed to generate token.",
+  "invalid_token": "Invalid token."
+}

@@ -1,0 +1,71 @@
+{
+  "port": 8080,
+  "app_name": "go-web-boilerplate-gin",
+  "environment": "dev",
+  "timezone": "UTC",
+  "token_config": {
+    "secret_key": "",
+    "token_hour_lifespan": 1
+  },
+  "mysql": {
+    "conn_max_idle_time": 60,
+    "conn_max_life_time": 1440,
+    "max_idle_conns": 100,
+    "max_open_conns": 200,
+    "default": {
+      "network": "tcp",
+      "host": "127.0.0.1",
+      "port": 3306,
+      "username": "root",
+      "password": "",
+      "schema": "",
+      "charset": "utf8mb4"
+    },
+    "connections": [
+      {
+        "datas": ["user"],
+        "writes": [
+          {
+            "network": "tcp",
+            "host": "127.0.0.1",
+            "port": 3306,
+            "username": "root",
+            "password": "",
+            "schema": "",
+            "charset": "utf8mb4"
+          }
+        ],
+        "reads": [
+          {
+            "network": "tcp",
+            "host": "127.0.0.1",
+            "port": 3306,
+            "username": "root",
+            "password": "",
+            "schema": "",
+            "charset": "utf8mb4"
+          }
+        ]
+      }
+    ]
+  },
+  "redis": {
+    "default": {
+      "addrs": ["127.0.0.1:6379"],
+      "username": "",
+      "password": "",
+      "route": {
+        "latency": true,
+        "random": false
+      },
+      "db": 0,
+      "prefix": "default",
+      "pool_size": 100,
+      "pool_timeout": 2,
+      "min_idle_conns": 100,
+      "max_idle_conns": 200,
+      "conn_max_idle_time": 60,
+      "conn_max_life_time": 1440
+    }
+  }
+}
