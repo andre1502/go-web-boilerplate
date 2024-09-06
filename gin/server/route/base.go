@@ -3,6 +3,9 @@ package route
 import (
 	"boilerplate/server/controller"
 	"boilerplate/server/middleware"
+	"boilerplate/server/response"
+	"boilerplate/utils/config"
+	"boilerplate/utils/database"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,14 +15,19 @@ type Route struct {
 	apiGroup   *gin.RouterGroup
 	middleware *middleware.Middleware
 	controller *controller.Controller
+	// add controller
 }
 
-func NewRoute(middleware *middleware.Middleware, gin *gin.Engine) *Route {
+func NewRoute(gin *gin.Engine, cfg *config.Config, db *database.Database, resp *response.Response, mdl *middleware.Middleware) *Route {
+	// assign ctrl variable to other controller
+	ctrl := controller.NewController(cfg, db, mdl.Pagination, resp)
+
 	route := &Route{
 		gin:        gin,
 		apiGroup:   gin.Group("/api"),
-		middleware: middleware,
-		controller: controller.NewController(middleware),
+		middleware: mdl,
+		controller: ctrl,
+		// add controller
 	}
 
 	route.addRoutes()

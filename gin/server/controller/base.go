@@ -1,21 +1,28 @@
 package controller
 
 import (
-	"boilerplate/server/middleware"
 	"boilerplate/server/response"
+	"boilerplate/service"
 	"boilerplate/utils/config"
+	"boilerplate/utils/database"
 )
 
 type Controller struct {
-	middleware *middleware.Middleware
-	config     *config.Config
+	config *config.Config
+	// add service
+	pagination *response.Pagination
 	response   *response.Response
 }
 
-func NewController(middleware *middleware.Middleware) *Controller {
+func NewController(cfg *config.Config, db *database.Database, pagination *response.Pagination, resp *response.Response) *Controller {
+	// assign svc variable to other service
+	// svc := service.NewService(cfg, db, pagination)
+	service.NewService(cfg, db, pagination)
+
 	return &Controller{
-		middleware: middleware,
-		config:     middleware.Config,
-		response:   response.NewResponse(middleware.Locale),
+		config: cfg,
+		// add service
+		pagination: pagination,
+		response:   resp,
 	}
 }

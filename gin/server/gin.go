@@ -21,7 +21,7 @@ import (
 )
 
 func (s *Server) newGinEngine() {
-	switch strings.ToLower(s.Config.Environment) {
+	switch strings.ToLower(s.config.Environment) {
 	case strings.ToLower(constant.PRD):
 		gin.SetMode(gin.ReleaseMode)
 	default:
@@ -30,7 +30,6 @@ func (s *Server) newGinEngine() {
 
 	validation := validation.NewValidation()
 
-	s.Gin = gin.New()
 	s.Gin.SetTrustedProxies(nil)
 	s.Gin.TrustedPlatform = "X-Forwarded-For"
 	s.Gin.HandleMethodNotAllowed = true
@@ -84,5 +83,5 @@ func (s *Server) newGinEngine() {
 	s.Gin.Use(s.middleware.Language())
 	s.Gin.Use(s.middleware.Paginate())
 
-	s.Router = route.NewRoute(s.middleware, s.Gin)
+	s.router = route.NewRoute(s.Gin, s.config, s.db, s.response, s.middleware)
 }

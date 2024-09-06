@@ -3,7 +3,7 @@ package middleware
 import (
 	"boilerplate/server/response"
 	"boilerplate/utils/config"
-	"boilerplate/utils/constant"
+	cconstant "boilerplate/utils/constant"
 	"boilerplate/utils/database"
 	"boilerplate/utils/locale"
 )
@@ -16,17 +16,15 @@ type Middleware struct {
 	Response   *response.Response
 }
 
-func NewMiddleware(config *config.Config, db *database.Database) *Middleware {
-	locale := locale.NewLocale(config)
-
+func NewMiddleware(cfg *config.Config, db *database.Database, lcl *locale.Locale, resp *response.Response) *Middleware {
 	return &Middleware{
-		Config: config,
+		Config: cfg,
 		Db:     db,
-		Locale: locale,
+		Locale: lcl,
 		Pagination: &response.Pagination{
-			Page:      0,
-			TotalPage: constant.PAGE_SIZE,
+			Page:     0,
+			PageSize: cconstant.PAGE_SIZE,
 		},
-		Response: response.NewResponse(locale),
+		Response: resp,
 	}
 }

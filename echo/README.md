@@ -64,17 +64,17 @@ type Route struct {
 	...
 
 	userController    *controller.UserController
-	// other controller
+	// add controller
 }
 
-func NewRoute(ech *echo.Echo, middleware *middleware.Middleware, validation *validation.Validation) *Route {
+func NewRoute(ech *echo.Echo, cfg *config.Config, db *database.Database, vld *validation.Validation, resp *response.Response, mdl *middleware.Middleware) *Route {
+	ctrl := controller.NewController(cfg, db, vld, mdl.Pagination, resp)
+
 	route := &Route{
 		...
 
-		// Since echo doesn't include validation by default, you need to supply validation by your own or using go `validator`.
-		// This boilerplate also provide validation from go `validator`.
-		userController:    controller.NewUserController(middleware, validation),
-		// other controller
+		userController:    controller.NewUserController(ctrl),
+		//add controller
 	}
 
 	route.addRoutes()
@@ -88,7 +88,7 @@ func (r *Route) addRoutes() {
 	...
 
 	r.authRoutes()
-	// other route
+	//add routes
 }
 
 // add default route for get, post, health check
@@ -114,7 +114,7 @@ func (r *Route) authRoutes() {
 
     // set middleware in route (possible to add multiple middleware)
 		userRoutes.GET("/user", r.middleware.JwtAuth(), r.userController.GetUserLogin)
-    // other routes
+    // add routes
 	}
 }
 
@@ -210,17 +210,11 @@ import (
 )
 
 type UserController struct {
-	Controller
-	userService *service.UserService
-	// other service
+	*Controller
 }
 
-func NewUserController(middleware *middleware.Middleware, validation *validation.Validation) *UserController {
-	return &UserController{
-		Controller:  *NewController(middleware, validation),
-		userService: service.NewUserService(middleware),
-		// other service
-	}
+func NewUserController(c *Controller) *UserController {
+	return &UserController{c}
 }
 
 func (uc *UserController) Register(c echo.Context) error {
@@ -266,7 +260,7 @@ import (
 	"boilerplate/model"
 	"boilerplate/repository"
 	"boilerplate/server/middleware"
-	"boilerplate/utils/constant"
+	cconstant "boilerplate/utils/constant"
 	cerror "boilerplate/utils/error"
 	"boilerplate/utils/token"
 	"database/sql"
@@ -277,18 +271,11 @@ import (
 )
 
 type UserService struct {
-	Service
-	userRepo *repository.UserRepository
-  // other repo
+	*Service
 }
 
-func NewUserService(middleware *middleware.Middleware) *UserService {
-	return &UserService{
-		Service:  *NewService(middleware),
-    // other service
-		userRepo: repository.NewUserRepository(middleware),
-    // other repo
-	}
+func NewUserService(s *Service) *UserService {
+	return &UserService{s}
 }
 
 func (us *UserService) Register(username, password string) (*model.User, string, error) {
@@ -338,14 +325,11 @@ import (
 )
 
 type UserRepository struct {
-	Repository
+	*Repository
 }
 
-func NewUserRepository(middleware *middleware.Middleware) *UserRepository {
-	return &UserRepository{
-		Repository: *NewRepository(middleware),
-    // other repo
-	}
+func NewUserRepository(r *Repository) *UserRepository {
+	return &UserRepository{r}
 }
 
 // create user and also example to omit some field
@@ -373,8 +357,8 @@ func (uc *UserController) GetUsers(c echo.Context) error {
 		return uc.response.Json(c, http.StatusBadRequest, nil, err)
 	}
 
-  // set response pagination from middleware pagination
-	uc.response.Pagination = uc.middleware.Pagination
+  // set response pagination from controller pagination
+	uc.response.Pagination = uc.Pagination
 	return uc.response.Json(c, http.StatusOK, res, nil)
 }
 
@@ -385,12 +369,12 @@ func (repo *UserRepository) GetUserList() ([]*model.User, error) {
 	result := repo.db.MySQL.Orm
 
   // add scopes into query when pagination used
-	if repo.middleware.Pagination.Page > 0 {
+	if repo.pagination.Page > 0 {
 		result = result.Scopes(repo.Paginate)
 	}
 
   // query also return total of rows
-	result = result.Select("id, username, password, registered_at, login_at, count(id) OVER () AS total_rows").Find(&userList)
+	result = result.Select("id, username, password, point, registered_at, login_at, count(id) OVER () AS total_rows").Find(&userList)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -401,8 +385,8 @@ func (repo *UserRepository) GetUserList() ([]*model.User, error) {
 	}
 
   // when pagination used, set pagination TotalRecord property from data first record of TotalRows
-	if (len(userList) > 0) && (repo.middleware.Pagination.Page > 0) {
-		repo.middleware.Pagination.TotalRecord = userList[0].TotalRows
+	if (len(userList) > 0) && (repo.pagination.Page > 0) {
+		repo.pagination.TotalRecord = userList[0].TotalRows
 	}
 
 	return userList, nil
@@ -422,10 +406,10 @@ func (us *UserService) GenerateToken(userId uint64) (tkn string, err error) {
 		return "", err
 	}
 
-	key := fmt.Sprintf(constant.MEMBER_TOKEN_KEY, userId)
+	key := fmt.Sprintf(cconstant.MEMBER_TOKEN_KEY, userId)
 
   // cache generated token to redis within one hour
-	if err = us.redis.Set(key, tkn, constant.MEMBER_TOKEN_TTL); err != nil {
+	if err = us.redis.Set(key, tkn, cconstant.MEMBER_TOKEN_TTL); err != nil {
 		return "", err
 	}
 
@@ -438,7 +422,7 @@ func (us *SettingService) CachedSettings() ([]*model.Setting, error) {
 	var err error
 
   // get cached settings from different connection
-	settings, err := us.redis.Connection(constant.SETTING).Get(constant.SETTING_LIST)
+	settings, err := us.redis.Connection(cconstant.SETTING).Get(cconstant.SETTING_LIST)
 	if err != nil {
 		logger.Sugar.Error(err)
 		return nil, err
@@ -464,7 +448,7 @@ func (us *SettingService) CachedSettings() ([]*model.Setting, error) {
 		}
 
     // cache settings to different connection
-		if err = us.redis.Connection(constant.SETTING).Set(constant.SETTING_LIST, string(jsonData), constant.SETTING_TTL); err != nil {
+		if err = us.redis.Connection(cconstant.SETTING).Set(cconstant.SETTING_LIST, string(jsonData), cconstant.SETTING_TTL); err != nil {
 			return nil, err
 		}
 	}
@@ -481,7 +465,7 @@ func (us *SettingService) UpdateSettingByName(name string, value string) (int64,
 	}
 
 	if rows > 0 {
-		if err := us.db.Redis.Connection(constant.SETTING).Del([]string{constant.SETTING_LIST, constant.SETTING_MAP}...); err != nil {
+		if err := us.db.Redis.Connection(cconstant.SETTING).Del([]string{cconstant.SETTING_LIST, cconstant.SETTING_MAP}...); err != nil {
 			return rows, err
 		}
 	}

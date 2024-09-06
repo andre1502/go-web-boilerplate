@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"boilerplate/server/middleware"
+	"boilerplate/server/response"
 	"boilerplate/utils/config"
 	"boilerplate/utils/database"
 
@@ -9,27 +9,27 @@ import (
 )
 
 type Repository struct {
-	middleware *middleware.Middleware
 	config     *config.Config
 	db         *database.Database
+	pagination *response.Pagination
 }
 
-func NewRepository(middleware *middleware.Middleware) *Repository {
+func NewRepository(cfg *config.Config, db *database.Database, pagination *response.Pagination) *Repository {
 	return &Repository{
-		middleware: middleware,
-		config:     middleware.Config,
-		db:         middleware.Db,
+		config:     cfg,
+		db:         db,
+		pagination: pagination,
 	}
 }
 
 func (repo *Repository) Paginate(db *gorm.DB) *gorm.DB {
-	page := repo.middleware.Pagination.Page
+	page := repo.pagination.Page
 
 	if page <= 0 {
 		page = 1
 	}
 
-	offset := (page - 1) * repo.middleware.Pagination.PageSize
+	offset := (page - 1) * repo.pagination.PageSize
 
-	return db.Offset(offset).Limit(repo.middleware.Pagination.PageSize)
+	return db.Offset(offset).Limit(repo.pagination.PageSize)
 }

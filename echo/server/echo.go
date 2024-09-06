@@ -2,7 +2,6 @@ package server
 
 import (
 	"boilerplate/server/route"
-	"boilerplate/server/validation"
 	"boilerplate/utils/constant"
 	cerror "boilerplate/utils/error"
 	"boilerplate/utils/logger"
@@ -16,11 +15,7 @@ import (
 )
 
 func (s *Server) newEchoEngine() {
-	validation := validation.NewValidation()
-
-	s.Echo = echo.New()
-
-	switch strings.ToLower(s.Config.Environment) {
+	switch strings.ToLower(s.config.Environment) {
 	case strings.ToLower(constant.PRD):
 		s.Echo.Debug = false
 	default:
@@ -35,7 +30,7 @@ func (s *Server) newEchoEngine() {
 		echo.TrustPrivateNet(false),
 	)
 
-	s.Echo.Validator = validation
+	s.Echo.Validator = s.validation
 
 	s.Echo.Use(echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
 		Skipper:          echoMiddleware.DefaultSkipper,
@@ -88,7 +83,7 @@ func (s *Server) newEchoEngine() {
 	s.Echo.Pre(s.middleware.Language)
 	s.Echo.Pre(s.middleware.Paginate)
 
-	s.Router = route.NewRoute(s.Echo, s.middleware, validation)
+	s.router = route.NewRoute(s.Echo, s.config, s.db, s.validation, s.response, s.middleware)
 }
 
 func (s *Server) httpErrorHandler(err error, c echo.Context) {
