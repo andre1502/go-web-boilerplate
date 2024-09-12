@@ -78,15 +78,11 @@ func (r *Redis) Connection(name string) *Redis {
 	return r
 }
 
-func (r *Redis) conn(key string) string {
+func (r *Redis) PrefixedKey(key string) string {
 	if r.Client == nil {
 		r.Client = r.Connection(constant.DEFAULT).Client
 	}
 
-	return r.PrefixedKey(key)
-}
-
-func (r *Redis) PrefixedKey(key string) string {
 	prefix := r.Client.prefix
 
 	if !utils.IsEmptyString(prefix) {
@@ -97,7 +93,7 @@ func (r *Redis) PrefixedKey(key string) string {
 }
 
 func (r *Redis) Set(key string, data any, ttl time.Duration) (err error) {
-	key = r.conn(key)
+	key = r.PrefixedKey(key)
 
 	if err = (*r.Client.Client).Set(r.ctx, key, data, ttl).Err(); err != nil {
 		r.Client = nil
@@ -114,7 +110,7 @@ func (r *Redis) Set(key string, data any, ttl time.Duration) (err error) {
 }
 
 func (r *Redis) Get(key string) (result string, err error) {
-	key = r.conn(key)
+	key = r.PrefixedKey(key)
 
 	if result, err = (*r.Client.Client).Get(r.ctx, key).Result(); err != nil {
 		r.Client = nil
@@ -132,8 +128,8 @@ func (r *Redis) Get(key string) (result string, err error) {
 }
 
 func (r *Redis) Del(keys ...string) error {
-	if r.Client == nil {
-		r.Client = r.Connection(constant.DEFAULT).Client
+	if len(keys) <= 0 {
+		return cerror.Fail(cerror.FuncName(), "failed_redis_empty_keys", nil, nil)
 	}
 
 	for idx, key := range keys {
