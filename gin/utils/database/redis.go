@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -86,6 +87,12 @@ func (r *Redis) PrefixedKey(key string) string {
 	prefix := r.Client.prefix
 
 	if !utils.IsEmptyString(prefix) {
+		isHavePrefix := strings.Index(key, fmt.Sprintf("%s:", prefix))
+
+		if isHavePrefix > -1 {
+			return key
+		}
+
 		return fmt.Sprintf("%s:%s", prefix, key)
 	}
 
