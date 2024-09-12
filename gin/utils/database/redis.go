@@ -16,13 +16,13 @@ import (
 
 type Redis struct {
 	ctx     context.Context
-	client  *RedisClient
+	Client  *RedisClient
 	clients map[string]*RedisClient
 }
 
 type RedisClient struct {
 	prefix string
-	client *redis.UniversalClient
+	Client *redis.UniversalClient
 }
 
 func NewRedis(config *config.Config) *Redis {
@@ -55,7 +55,7 @@ func (r *Redis) Connect(config *config.Config) {
 
 		r.clients[key] = &RedisClient{
 			prefix: value.Prefix,
-			client: &client,
+			Client: &client,
 		}
 
 		if err := client.Ping(r.ctx).Err(); err != nil {
@@ -63,7 +63,7 @@ func (r *Redis) Connect(config *config.Config) {
 		}
 	}
 
-	r.client = r.clients[constant.DEFAULT]
+	r.Client = r.clients[constant.DEFAULT]
 
 	logger.Sugar.Debug("Redis connected.")
 }
@@ -73,21 +73,21 @@ func (r *Redis) Connection(name string) *Redis {
 		name = constant.DEFAULT
 	}
 
-	r.client = r.clients[name]
+	r.Client = r.clients[name]
 
 	return r
 }
 
 func (r *Redis) conn(key string) string {
-	if r.client == nil {
-		r.client = r.Connection(constant.DEFAULT).client
+	if r.Client == nil {
+		r.Client = r.Connection(constant.DEFAULT).Client
 	}
 
-	return r.prefixedKey(key)
+	return r.PrefixedKey(key)
 }
 
-func (r *Redis) prefixedKey(key string) string {
-	prefix := r.client.prefix
+func (r *Redis) PrefixedKey(key string) string {
+	prefix := r.Client.prefix
 
 	if !utils.IsEmptyString(prefix) {
 		return fmt.Sprintf("%s:%s", prefix, key)
@@ -99,8 +99,8 @@ func (r *Redis) prefixedKey(key string) string {
 func (r *Redis) Set(key string, data any, ttl time.Duration) (err error) {
 	key = r.conn(key)
 
-	if err = (*r.client.client).Set(r.ctx, key, data, ttl).Err(); err != nil {
-		r.client = nil
+	if err = (*r.Client.Client).Set(r.ctx, key, data, ttl).Err(); err != nil {
+		r.Client = nil
 
 		return cerror.Fail(cerror.FuncName(), "failed_redis_set", map[string]any{
 			"redis_key":  key,
@@ -108,7 +108,7 @@ func (r *Redis) Set(key string, data any, ttl time.Duration) (err error) {
 		}, err)
 	}
 
-	r.client = nil
+	r.Client = nil
 
 	return nil
 }
@@ -116,8 +116,8 @@ func (r *Redis) Set(key string, data any, ttl time.Duration) (err error) {
 func (r *Redis) Get(key string) (result string, err error) {
 	key = r.conn(key)
 
-	if result, err = (*r.client.client).Get(r.ctx, key).Result(); err != nil {
-		r.client = nil
+	if result, err = (*r.Client.Client).Get(r.ctx, key).Result(); err != nil {
+		r.Client = nil
 
 		if errors.Is(err, redis.Nil) {
 			return "", nil
@@ -126,22 +126,22 @@ func (r *Redis) Get(key string) (result string, err error) {
 		return "", cerror.Fail(cerror.FuncName(), "failed_redis_get", map[string]any{"redis_key": key}, err)
 	}
 
-	r.client = nil
+	r.Client = nil
 
 	return result, nil
 }
 
 func (r *Redis) Del(keys ...string) error {
-	if r.client == nil {
-		r.client = r.Connection(constant.DEFAULT).client
+	if r.Client == nil {
+		r.Client = r.Connection(constant.DEFAULT).Client
 	}
 
 	for idx, key := range keys {
-		keys[idx] = r.prefixedKey(key)
+		keys[idx] = r.PrefixedKey(key)
 	}
 
-	if err := (*r.client.client).Del(r.ctx, keys...).Err(); err != nil {
-		r.client = nil
+	if err := (*r.Client.Client).Del(r.ctx, keys...).Err(); err != nil {
+		r.Client = nil
 
 		if errors.Is(err, redis.Nil) {
 			return nil
@@ -150,7 +150,7 @@ func (r *Redis) Del(keys ...string) error {
 		return cerror.Fail(cerror.FuncName(), "failed_redis_remove", map[string]any{"redis_key": keys}, err)
 	}
 
-	r.client = nil
+	r.Client = nil
 
 	return nil
 }
