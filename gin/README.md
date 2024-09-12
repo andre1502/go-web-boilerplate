@@ -368,15 +368,14 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 func (repo *UserRepository) GetUserList() ([]*model.User, error) {
 	var userList []*model.User
 
-	result := repo.db.MySQL.Orm
+	result := repo.db.MySQL.Orm.Select("id, username, password, point, registered_at, login_at")
 
   // add scopes into query when pagination used
 	if repo.pagination.Page > 0 {
 		result = result.Scopes(repo.Paginate)
 	}
 
-  // query also return total of rows
-	result = result.Select("id, username, password, point, registered_at, login_at, count(id) OVER () AS total_rows").Find(&userList)
+	result = result.Find(&userList)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -386,9 +385,15 @@ func (repo *UserRepository) GetUserList() ([]*model.User, error) {
 		return nil, cerror.Fail(cerror.FuncName(), "failed_db_query", nil, result.Error)
 	}
 
-  // when pagination used, set pagination TotalRecord property from data first record of TotalRows
+  // when pagination used, set pagination TotalRecord property
 	if (len(userList) > 0) && (repo.pagination.Page > 0) {
-		repo.pagination.TotalRecord = userList[0].TotalRows
+		totalRecord, err := repo.GetTotalRecord(result, "id")
+
+		if err != nil {
+			return nil, err
+		}
+
+		repo.pagination.TotalRecord = totalRecord
 	}
 
 	return userList, nil
