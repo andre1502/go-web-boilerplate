@@ -20,27 +20,19 @@ func (m *Middleware) JwtAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		requestTkn := m.ExtractToken(c)
 		claims, err := token.TokenValid(requestTkn, []byte(m.Config.TokenConfig.SecretKey))
 		if err != nil {
-			logger.Sugar.Error(err)
-			err = cerror.Fail(cerror.FuncName(), "invalid_token", nil, err)
-			m.Response.Json(c, http.StatusUnauthorized, "", err)
-			return err
+			return m.Response.Json(c, http.StatusUnauthorized, "", cerror.Fail(cerror.FuncName(), "invalid_token", nil, err))
 		}
 
 		key := fmt.Sprintf(constant.MEMBER_TOKEN_KEY, claims.UserId)
 
 		tkn, err := m.Db.Redis.Get(key)
 		if err != nil {
-			logger.Sugar.Error(err)
-			err = cerror.Fail(cerror.FuncName(), "invalid_token", nil, err)
-			m.Response.Json(c, http.StatusUnauthorized, "", err)
-			return err
+			return m.Response.Json(c, http.StatusUnauthorized, "", cerror.Fail(cerror.FuncName(), "invalid_token", nil, err))
 		}
 
 		if tkn != requestTkn {
 			logger.Sugar.Errorf("Not valid comparison of token: [%s] and requestToken: [%s].", tkn, requestTkn)
-			err = cerror.Fail(cerror.FuncName(), "invalid_token", nil, nil)
-			m.Response.Json(c, http.StatusUnauthorized, "", err)
-			return err
+			return m.Response.Json(c, http.StatusUnauthorized, "", cerror.Fail(cerror.FuncName(), "invalid_token", nil, nil))
 		}
 
 		c.Set("user_id", claims.UserId)
