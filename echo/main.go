@@ -24,12 +24,12 @@ func main() {
 		panic("args error")
 	}
 
-	cfg := config.NewConfig(context.Background(), etcdHost, settingName)
-
-	server := server.NewServer(cfg)
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+
+	cfg := config.NewConfig(ctx, etcdHost, settingName)
+
+	server := server.NewServer(cfg)
 
 	go func() {
 		if err := server.Echo.Start(server.AppPort); err != http.ErrServerClosed {

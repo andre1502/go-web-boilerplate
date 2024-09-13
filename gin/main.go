@@ -28,7 +28,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	cfg := config.NewConfig(context.Background(), etcdHost, settingName)
+	cfg := config.NewConfig(ctx, etcdHost, settingName)
 
 	server := server.NewServer(cfg)
 
